@@ -1,0 +1,6 @@
+﻿.venv
+models/embedder_arcface.onnx
+__pycache__/
+*.pyc
+data/
+*.log
