@@ -1,28 +1,49 @@
 # Face MQTT Servo Tracking System
 
-A real-time face tracking system that detects face position using Python, publishes movement data via MQTT, visualizes it on a web dashboard, and physically moves a servo motor connected to an ESP8266/ESP32 to follow the face.
+A real-time IoT system that detects a user's face using Python and OpenCV, publishes movement data via MQTT, visualizes the movement on a live web dashboard, and physically moves a servo motor connected to an ESP8266/ESP32 to follow the face direction.
+
+---
+
+## 🧠 System Description
+
+This project implements an end-to-end face tracking pipeline:
+
+1. **Face Detection (PC)**
+   The Python script captures webcam frames, detects the face, and computes its position (left, right, center).
+
+2. **MQTT Messaging**
+   The detected movement data is published to an MQTT broker.
+
+3. **WebSocket Relay (VPS)**
+   The backend relay subscribes to MQTT topics and pushes real-time updates to the browser via WebSocket.
+
+4. **Live Dashboard (Browser)**
+   The HTML dashboard displays the face movement in real time.
+
+5. **Servo Control (ESP8266/ESP32)**
+   The ESP subscribes to MQTT messages and rotates the servo to follow the face.
 
 ---
 
 ## 🚀 Features
 
-* 🎯 Real-time face detection with Python & OpenCV
-* 📡 MQTT communication between components
-* 🌐 Live movement visualization on HTML dashboard
-* 🤖 Servo motor automatically follows face direction
-* 🔄 WebSocket relay for browser updates
-* ⚡ Lightweight and modular architecture
+* 🎯 Real-time face detection with OpenCV
+* 📡 MQTT-based communication
+* 🌐 Live browser dashboard
+* 🤖 Servo motor follows face direction
+* 🔄 WebSocket live updates
+* ⚡ Lightweight and modular
 
 ---
 
 ## 🏗️ System Architecture
 
 ```
-Camera → Python Face Tracker → MQTT Broker → ESP8266 Servo
-                                  ↓
-                           WebSocket Relay
-                                  ↓
-                              HTML Dashboard
+Webcam → Python Face Tracker → MQTT Broker → ESP8266 Servo
+                                   ↓
+                            WebSocket Relay
+                                   ↓
+                             Live HTML Dashboard
 ```
 
 ---
@@ -32,16 +53,16 @@ Camera → Python Face Tracker → MQTT Broker → ESP8266 Servo
 ```
 face_mqtt_servo/
 │
-├── face_lock/              # Python face tracking code
+├── face_lock/
 │   └── face_tracker.py
 │
-├── backend/                # WebSocket relay
+├── backend/
 │   └── ws_relay.py
 │
-├── esp/                    # ESP8266/ESP32 servo code
+├── esp/
 │   └── servo_mqtt.ino
 │
-├── web/                    # Frontend dashboard
+├── web/
 │   ├── index.html
 │   ├── style.css
 │   └── script.js
@@ -52,28 +73,58 @@ face_mqtt_servo/
 
 ---
 
+## 📡 MQTT Topics Used
+
+| Topic                        | Purpose                      |
+| ---------------------------- | ---------------------------- |
+| `vision/superstars/movement` | Main face movement direction |
+| `face/x`                     | Horizontal face position     |
+| `face/y`                     | Vertical face position       |
+| `servo/angle`                | Servo angle command          |
+
+✅ **Important:** All components must use the same topic names.
+
+---
+
+## 🌐 Live Dashboard URL
+
+**WebSocket endpoint (example):**
+
+```
+ws://YOUR_VPS_IP:9003
+```
+
+**Local dashboard:**
+
+```
+web/index.html
+```
+
+👉 Replace `YOUR_VPS_IP` with your actual VPS address.
+
+---
+
 ## ⚙️ Requirements
 
-### 🖥️ PC
+### PC
 
 * Python 3.9+
 * Webcam
-* Mosquitto MQTT broker
-* PowerShell / Terminal
+* MQTT broker (Mosquitto recommended)
 
-### 📡 Hardware
+### Hardware
 
 * ESP8266 or ESP32
-* Servo motor (SG90 recommended)
+* SG90 Servo motor
 * Jumper wires
 * Breadboard
-* Stable power supply
+* Stable 5V power supply
 
 ---
 
 ## 📦 Installation
 
-### 1️⃣ Clone the repository
+### 1️⃣ Clone repository
 
 ```bash
 git clone https://github.com/Kessia09/face_mqtt_servo.git
@@ -82,32 +133,32 @@ cd face_mqtt_servo
 
 ---
 
-### 2️⃣ Install Python dependencies
+### 2️⃣ Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-If no requirements file exists:
+If missing:
 
 ```bash
-pip install opencv-python paho-mqtt numpy
+pip install opencv-python paho-mqtt numpy websockets
 ```
 
 ---
 
 ### 3️⃣ Start MQTT broker
 
-Example (Mosquitto):
-
-```bash
-mosquitto -v
-```
-
-Or on VPS:
+**Linux/VPS**
 
 ```bash
 sudo systemctl start mosquitto
+```
+
+**Local**
+
+```bash
+mosquitto -v
 ```
 
 ---
@@ -117,6 +168,12 @@ sudo systemctl start mosquitto
 ```bash
 cd backend
 python ws_relay.py
+```
+
+Make sure it shows:
+
+```
+Ready — MQTT → WebSocket relay active
 ```
 
 ---
@@ -130,11 +187,10 @@ python face_tracker.py
 
 ---
 
-### 6️⃣ Upload ESP code
+### 6️⃣ Upload ESP firmware
 
-* Open `servo_mqtt.ino` in Arduino IDE
-* Select your ESP8266/ESP32 board
-* Update:
+1. Open `servo_mqtt.ino` in Arduino IDE
+2. Update WiFi and broker settings:
 
 ```cpp
 const char* ssid = "YOUR_WIFI";
@@ -142,94 +198,71 @@ const char* password = "YOUR_PASSWORD";
 const char* mqtt_server = "YOUR_VPS_IP";
 ```
 
-* Upload to board
+3. Upload to ESP8266/ESP32
 
 ---
 
 ### 7️⃣ Open the dashboard
 
-Open in browser:
+Open in your browser:
 
 ```
 web/index.html
 ```
 
----
-
-## 📡 MQTT Topics
-
-| Topic            | Description              |
-| ---------------- | ------------------------ |
-| `face/x`         | Horizontal face position |
-| `face/y`         | Vertical face position   |
-| `face/direction` | Movement direction       |
-| `servo/angle`    | Servo angle command      |
-
----
-
-## 🔧 Configuration
-
-Make sure these match everywhere:
-
-* ✅ MQTT broker IP
-* ✅ MQTT port (e.g., 9003 for WebSocket)
-* ✅ Topic names
-* ✅ WebSocket URL in frontend
+You should see live movement updates.
 
 ---
 
 ## 🐛 Troubleshooting
 
-### ❌ WebSocket error / reconnecting
+### WebSocket reconnect loop
 
-* Check broker port (9003 for WS)
-* Confirm ws_relay is running
-* Verify firewall allows port
-* Ensure frontend URL is correct
-
----
-
-### ❌ Servo not moving
-
-* Check power supply
-* Verify ESP is connected to WiFi
-* Confirm MQTT messages arriving
-* Check GPIO pin wiring
+* Ensure ws_relay is running
+* Verify port (9003) is open
+* Check frontend WebSocket URL
+* Confirm MQTT broker is active
 
 ---
 
-### ❌ Face not detected
+### Servo not moving
 
-* Ensure camera works
-* Check lighting
-* Verify OpenCV installed
+* Check power supply (very common issue ⚠️)
+* Verify ESP WiFi connection
+* Confirm MQTT messages received
+* Check GPIO wiring
+
+---
+
+### Face not detected
+
+* Check webcam access
+* Improve lighting
+* Verify OpenCV installation
 
 ---
 
 ## 🛠️ Future Improvements
 
-* 📱 Mobile dashboard
-* 🎯 Dual-axis servo (pan/tilt)
-* 🧠 Face recognition (not just tracking)
+* 📱 Mobile-friendly dashboard
+* 🎯 Pan-tilt dual servo
+* 🧠 Face recognition
 * ☁️ Cloud deployment
-* 📊 Movement smoothing
+* 📊 Motion smoothing
 
 ---
 
 ## 👩🏽‍💻 Author
 
 **Kessia Ndinda**
-
-* Computer Science Student
-* IoT & AI Enthusiast
-* Future Tech Entrepreneur 🚀
+Computer Science Student | IoT & AI Enthusiast
 
 ---
 
 ## 📜 License
 
-This project is open source and available under the MIT License.
+MIT License
 
 ---
 
-⭐ If you like this project, don't forget to star the repo!
+⭐ Star the repo if you like this project!
